@@ -1,0 +1,2 @@
+在vim中我们先用:source reverse_content.vim来加载脚本，然后就可以用:call Rc()来运行python脚本了
+https://www.jb51.net/article/57100.htm
