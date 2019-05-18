@@ -11,15 +11,16 @@ cmb_pattern = r"(\d+) \d+ (.+) [￥$] ([\d,]+\.\d+) 7007 (.+) ([\d,]+\.\d+)"
 sort_rules = {"food": ["肯德基", "老盛昌", "全家", "水果", "汉堡王", "星巴克", "必胜客", "红宝石", "多乐之日", 
                       "金拱门", "鸡排", "鲜芋仙", "四海游龙", "雪芙", "汤包", "泡芙", "餐饮", "呷哺呷哺", "玛格萝妮", "烤肉",
                       "翠华", "美团 && amount >= 20", "集贸市场", "莉莲", "煌上煌", "Mo-Mo牧场", "阿文大虾"],
-            "life": ["绿地优鲜超市", "华住", "宝岛眼镜", "上蔬永辉", "优衣库", "迪亚天天", "窝的鲜花", "茶阁里的猫"
+            "life": ["绿地优鲜超市", "华住", "宝岛眼镜", "上蔬永辉", "迪亚天天", "窝的鲜花", "茶阁里的猫",
                      "联华超市"],
+            "dressing": ["优衣库", "HM"],
             "traffic": ["嘀嗒", "嘀嘀", "美团 && amount < 20"],
-            "shopping": ["京东", "久光", ],
+            "shopping": ["京东", "久光", "芮欧"],
             "basic": ["城投水务", "电力公司"],
             "entertain": ["幸福蓝海", "格瓦拉", "主题乐园", ],
             "health": ["复旦大学附属华山医院"],
             "raise child": ["儿童医院", "第十人民医院", "网易考拉", "卡通尼", "麦淘亲子", "亲子",],
-            "education": ["otto2",  "教育"]
+            "education": ["otto2",  "教育", "当当网"]
             }
 
 
@@ -68,21 +69,21 @@ class Record():
             return -1, 'unsorted'
         
         
-def org(bill_text):
-    entrys = [entry.strip() for entry in bill_text.split('\n') if len(entry) > 8]
+def org(bill_text, print_reverse=False):
+    entry_text = [entry.strip() for entry in bill_text.split('\n') if len(entry) > 8]
     category = list(sort_rules.keys())
     sorted_bill = [[cat, []] for cat in category]
     sorted_bill.append(['unsorted', []])
     
     # 
-    for each_entry in entrys:
+    for each_entry in entry_text:
         a = Record(each_entry)
         rslt = a.sort(category)
         sorted_bill[rslt[0]][1].append(a)
         
     # 按details排序
-    for entrys in sorted_bill:
-        entrys[1].sort(key=lambda x: x.detail)
+    for cat_entrys in sorted_bill:
+        cat_entrys[1].sort(key=lambda x: x.detail)
     
     # print
     for cate in sorted_bill:
@@ -93,6 +94,12 @@ def org(bill_text):
                 sum_t += item.amount
                 print(item)
             print('--total:{:.2f}'.format(sum_t))
+            
+    # print reverse
+    if print_reverse:
+        print('reversed order:')
+        for each_entry in entry_text[::-1]:
+            print(each_entry)
 
     return sorted_bill
 
