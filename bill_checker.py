@@ -16,21 +16,22 @@ cmb_pattern = r"(\d+) \d+ (.+) [￥$] ([\d,]+\.\d+) 7007 (.+) ([\d,]+\.\d+)"
 sort_rules = {"food": ["肯德基", "老盛昌", "全家", "水果", "汉堡王", "星巴克", "必胜客", "红宝石", "多乐之日", 
                       "金拱门", "鸡排", "鲜芋仙", "四海游龙", "雪芙", "汤包", "泡芙", "餐饮", "呷哺呷哺", "玛格萝妮", "烤肉",
                       "翠华", "美团 && amount >= 20", "集贸市场", "莉莲", "煌上煌", "Mo-Mo牧场", "阿文大虾", "冰淇淋", "蛋糕", "咖喱", 
-                      "耶里夏丽", "维果部落", "巴黎贝甜", "宽窄巷", "甘兔庵", "泉盛公司", "茶食代",
-                      "餐厅", "酒楼", "食堂", "果茶", "巴黎贝甜", "维果部落", "茶餐", "冰激凌"],
+                      "耶里夏丽", "维果部落", "巴黎贝甜", "宽窄巷", "甘兔庵", "泉盛公司", "茶食代", "早安巴黎", "面包", "谷田稻香", "烧肉",
+                      "餐厅", "酒楼", "食堂", "果茶", "巴黎贝甜", "维果部落", "茶餐", "冰激凌", "陆祥店", "Coffee+Belt",
+                      "麦卡尤娜", "马上诺", "好德便利", "吴宝春麦方店"],
 
             "life": ["绿地优鲜超市", "华住", "宝岛眼镜", "上蔬永辉", "迪亚天天", "窝的鲜花", "茶阁里的猫",
-                     "联华超市", "叮咚买菜", "万宁", "屈臣氏"],
+                     "联华超市", "叮咚买菜", "万宁", "屈臣氏", "名创优品",  "顺丰速运"],
             "dressing": ["优衣库", "HM", "盖璞", "热风", "GU"],
-            "traffic": ["嘀嗒", "嘀嘀", "美团 && amount < 20"],
-            "shopping": ["京东", "久光", "芮欧"],
+            "traffic": ["嘀嗒", "嘀嘀", "美团 && amount < 20", "上海交通卡"],
+            "shopping": ["京东", "久光", "芮欧", "JD", "开市客",],
             "basic": ["城投水务", "电力公司", "手机充值"],
-            "entertain": ["幸福蓝海", "格瓦拉", "主题乐园", "顾村公园管理"],
+            "entertain": ["幸福蓝海", "格瓦拉", "主题乐园", "顾村公园管理", ],
             "health": ["复旦大学附属华山医院", "药房", "儿童医院", "第十人民医院",],
             "raise child": ["网易考拉", "卡通尼", "麦淘亲子", "亲子",
-                            "爱婴室", "玩具反斗城", "贤爸科学"],
-            "education": ["otto2",  "教育", "当当网"],
-            "holiday": ["去哪儿网"],
+                            "爱婴室", "玩具反斗城", "贤爸科学", "奈尔宝家庭中心"],
+            "education": ["otto2",  "教育", "当当网", "少儿英语", "彩贝壳"],
+            "holiday": ["去哪儿网", "酒店"],
             }
 
 sui_cat_table = {"food": ["食品酒水", "早午晚餐"],
@@ -42,7 +43,7 @@ sui_cat_table = {"food": ["食品酒水", "早午晚餐"],
                  "entertain": ["休闲娱乐", "休闲玩乐"],
                  "health": ["医疗保健", "药品费"],
                  "raise child": ["生儿育女", "养孩子"],
-                 "education": ["生儿育女", "教育孩子"],
+                 "education": ["生儿育女", "教育子女"],
                  "holiday": ["休闲娱乐", "旅游度假"],
                  "unsorted": ["XXX", "YYY"]
                  }
@@ -150,9 +151,24 @@ def generate_xls(sorted_bill, filename = 'cmb_xxxx.xls'):
             
         for entry in category_entrys[1]:
             date = str(datetime.datetime.today().year) + '-' + entry.date[:2] + '-' +entry.date[-2:]
+            detail = entry.detail
+            
+            # 微调
+            if (detail.startswith('财付通-')):
+                detail = detail[4:]
+            
+            if '美团' in detail:
+                if category_name == 'food':
+                    detail = '美团外卖'
+                else:
+                    detail = '美团打车'
+                    
+            if cat1 == '固定支出' and '手机充值' in detail:
+                cat2 = '通话上网'
+                
             
             xls_enpense_entry = ExpenseEntry(date=date, cat1=cat1, cat2=cat2, account1=account,
-                         amount=entry.amount, member=member, detail=entry.detail)
+                         amount=entry.amount, member=member, detail=detail)
             xls.add_expense_entry(xls_enpense_entry)
             
     xls.save()
