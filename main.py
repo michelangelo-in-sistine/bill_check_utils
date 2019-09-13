@@ -90,7 +90,6 @@ if "__main__" == __name__:
 
 
 
-
     """
     
     bc.org(bill, print_reverse=1)
