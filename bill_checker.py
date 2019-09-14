@@ -8,22 +8,24 @@ import re
 from xls_writer import SuiXlsTemplate, ExpenseEntry
 import datetime
 
-# email 账单
-cmb_pattern = r"(\d+) \d+ (.+) [￥$] ([\d,]+\.\d+) 7007 (.+) ([\d,]+\.\d+)"
-# pdf 账单
-#cmb_pattern = r"(\d\d/\d\d) (.+) ([\d,]+\.\d+) 7007 \d\d/\d\d ([\d,]+\.\d+)\(CN\)"
+# cmb email 账单
+cmb_pattern = r"(?P<date>\d+) \d+ (?P<detail>.+) [￥$] (?P<amount>[\d,]+\.\d+) 7007 (.+) ([\d,]+\.\d+)"
+# cmb pdf 账单
+cmb_pattern_pdf = r"(?P<date>\d\d/\d\d) (?P<detail>.+) (?P<amount>[\d,]+\.\d+) 7007 \d\d/\d\d ([\d,]+\.\d+)\(CN\)"
+# cmbc 账单
+cmbc_pattern = r"(?P<date>\d\d/\d\d) \d\d/\d\d (?P<detail>.*) (?P<amount>[\d,]+\.\d+) 4643"
 
 sort_rules = {"food": ["肯德基", "老盛昌", "全家", "水果", "汉堡王", "星巴克", "必胜客", "红宝石", "多乐之日", 
                       "金拱门", "鸡排", "鲜芋仙", "四海游龙", "雪芙", "汤包", "泡芙", "餐饮", "呷哺呷哺", "玛格萝妮", "烤肉",
                       "翠华", "美团 && amount >= 20", "集贸市场", "莉莲", "煌上煌", "Mo-Mo牧场", "阿文大虾", "冰淇淋", "蛋糕", "咖喱", 
                       "耶里夏丽", "维果部落", "巴黎贝甜", "宽窄巷", "甘兔庵", "泉盛公司", "茶食代", "早安巴黎", "面包", "谷田稻香", "烧肉",
                       "餐厅", "酒楼", "食堂", "果茶", "巴黎贝甜", "维果部落", "茶餐", "冰激凌", "陆祥店", "Coffee+Belt",
-                      "麦卡尤娜", "马上诺", "好德便利", "吴宝春麦方店"],
+                      "麦卡尤娜", "马上诺", "好德便利", "吴宝春麦方店", "7-Eleven"],
 
             "life": ["绿地优鲜超市", "华住", "宝岛眼镜", "上蔬永辉", "迪亚天天", "窝的鲜花", "茶阁里的猫",
                      "联华超市", "叮咚买菜", "万宁", "屈臣氏", "名创优品",  "顺丰速运"],
             "dressing": ["优衣库", "HM", "盖璞", "热风", "GU"],
-            "traffic": ["嘀嗒", "嘀嘀", "美团 && amount < 20", "上海交通卡"],
+            "traffic": ["嘀嗒", "美团 && amount < 20", "上海交通卡", "石油化工", "滴滴出行"],
             "shopping": ["京东", "久光", "芮欧", "JD", "开市客",],
             "basic": ["城投水务", "电力公司", "手机充值"],
             "entertain": ["幸福蓝海", "格瓦拉", "主题乐园", "顾村公园管理", ],
@@ -32,6 +34,8 @@ sort_rules = {"food": ["肯德基", "老盛昌", "全家", "水果", "汉堡王"
                             "爱婴室", "玩具反斗城", "贤爸科学", "奈尔宝家庭中心"],
             "education": ["otto2",  "教育", "当当网", "少儿英语", "彩贝壳"],
             "holiday": ["去哪儿网", "酒店"],
+            "business": ["丽途国际公寓"],
+            "security": ["相互宝"]
             }
 
 sui_cat_table = {"food": ["食品酒水", "早午晚餐"],
@@ -45,20 +49,24 @@ sui_cat_table = {"food": ["食品酒水", "早午晚餐"],
                  "raise child": ["生儿育女", "养孩子"],
                  "education": ["生儿育女", "教育子女"],
                  "holiday": ["休闲娱乐", "旅游度假"],
-                 "unsorted": ["XXX", "YYY"]
+                 "business": ["其他杂项", "公费垫付"],
+                 "security": ["金融保险", "购买保险"],
+                 "unsorted": ["XXX", "YYY"],
                  }
 
 
-
-
-
 class Record():
-    def __init__(self, entry_text):
-        rslt = re.match(cmb_pattern, entry_text)
+    def __init__(self, entry_text, pattern):
+        rslt = re.match(pattern, entry_text)
         if rslt:
-            self.date = rslt.groups()[0]
-            self.amount = float(rslt.groups()[2].replace(',',''))   #处理3,710
-            self.detail = rslt.groups()[1]
+#            self.date = rslt.groups()[0]
+#            self.amount = float(rslt.groups()[2].replace(',',''))   #处理3,710
+#            self.detail = rslt.groups()[1]
+            
+            self.date = rslt.groupdict()['date']
+            self.amount = float(rslt.groupdict()['amount'].replace(',','')) #处理千分号
+            self.detail = rslt.groupdict()['detail']
+            
         else:
             print(entry_text)
             assert 0, "entry error: {}".format(entry_text)
@@ -103,9 +111,16 @@ def org(bill_text, print_reverse=False):
     sorted_bill = [[cat, []] for cat in category]
     sorted_bill.append(['unsorted', []])
     
+    for pattern in (cmb_pattern, cmb_pattern_pdf, cmbc_pattern):
+        rslt = re.match(pattern, entry_text[0])
+        if rslt:
+            break
+    else:
+        assert 0, 'no repr pattern match!'
+    
     # 
     for each_entry in entry_text:
-        a = Record(each_entry)
+        a = Record(each_entry, pattern)
         rslt = a.sort(category)
         sorted_bill[rslt[0]][1].append(a)
         
@@ -137,12 +152,12 @@ def generate_xls(sorted_bill, filename = 'cmb_xxxx.xls'):
 
     xls = SuiXlsTemplate('./xls/' + filename)
     
-    if filename.startswith('cmb'):
-        member = '郑之颖'
-        account = '信用卡招行人民币'
-    elif filename.startswith('cmbc'):
+    if filename.startswith('cmbc'):
         member = ''
         account = '信用卡民生人民币'
+    elif filename.startswith('cmb_'):
+        member = '郑之颖'
+        account = '信用卡招行人民币'
 
     for category_entrys in sorted_bill:
         category_name = category_entrys[0]
