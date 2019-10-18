@@ -14,24 +14,27 @@ cmb_pattern = r"(?P<date>\d+) \d+ (?P<detail>.+) [￥$] (?P<amount>[\d,]+\.\d+) 
 cmb_pattern_pdf = r"(?P<date>\d\d/\d\d) (?P<detail>.+) (?P<amount>[\d,]+\.\d+) 7007 \d\d/\d\d ([\d,]+\.\d+)\(CN\)"
 # cmbc 账单
 cmbc_pattern = r"(?P<date>\d\d/\d\d) \d\d/\d\d (?P<detail>.*) (?P<amount>[\d,]+\.\d+) 4643"
+# ccb(建行) 账单
+cbc_pattern = r"(?P<date>\d\d\d\d-\d\d-\d\d)\s+(\d\d\d\d-\d\d-\d\d)\s+3885\s+(?P<detail>\S+)\s+CNY\s+(?P<amount>[\d,]+\.\d+)\s+CNY\s+([\d,]+\.\d+)"
 
 sort_rules = {"food": ["肯德基", "老盛昌", "全家", "水果", "汉堡王", "星巴克", "必胜客", "红宝石", "多乐之日", 
                       "金拱门", "鸡排", "鲜芋仙", "四海游龙", "雪芙", "汤包", "泡芙", "餐饮", "呷哺呷哺", "玛格萝妮", "烤肉",
                       "翠华", "美团 && amount >= 20", "集贸市场", "莉莲", "煌上煌", "Mo-Mo牧场", "阿文大虾", "冰淇淋", "蛋糕", "咖喱", 
                       "耶里夏丽", "维果部落", "巴黎贝甜", "宽窄巷", "甘兔庵", "泉盛公司", "茶食代", "早安巴黎", "面包", "谷田稻香", "烧肉",
                       "餐厅", "酒楼", "食堂", "果茶", "巴黎贝甜", "维果部落", "茶餐", "冰激凌", "陆祥店", "Coffee+Belt",
-                      "麦卡尤娜", "马上诺", "好德便利", "吴宝春麦方店", "7-Eleven"],
+                      "麦卡尤娜", "马上诺", "好德便利", "吴宝春麦方店", "7-Eleven", "阿甘锅盔", "蘇小柳", "曼游记", "杂粮煎饼", "留夫鸭", "清美绿色食品" ,
+                      "小面家人", "食云纪", "Cantina", "牛杂", "牛肉", ],
 
             "life": ["绿地优鲜超市", "华住", "宝岛眼镜", "上蔬永辉", "迪亚天天", "窝的鲜花", "茶阁里的猫",
                      "联华超市", "叮咚买菜", "万宁", "屈臣氏", "名创优品",  "顺丰速运"],
-            "dressing": ["优衣库", "HM", "盖璞", "热风", "GU"],
-            "traffic": ["嘀嗒", "美团 && amount < 20", "上海交通卡", "石油化工", "滴滴出行"],
+            "dressing": ["优衣库", "HM", "盖璞", "热风", "GU", "服装"],
+            "traffic": ["嘀嗒", "美团 && amount < 20", "上海交通卡", "石油化工", "滴滴出行", "钧正网络", "地铁APP"],
             "shopping": ["京东", "久光", "芮欧", "JD", "开市客",],
-            "basic": ["城投水务", "电力公司", "手机充值"],
+            "basic": ["城投水务", "电力公司", "手机充值", "上海燃气有限公司"],
             "entertain": ["幸福蓝海", "格瓦拉", "主题乐园", "顾村公园管理", ],
-            "health": ["复旦大学附属华山医院", "药房", "儿童医院", "第十人民医院",],
+            "health": ["复旦大学附属华山医院", "药房", "儿童医院", "第十人民医院", "望族国宾"],
             "raise child": ["网易考拉", "卡通尼", "麦淘亲子", "亲子",
-                            "爱婴室", "玩具反斗城", "贤爸科学", "奈尔宝家庭中心"],
+                            "爱婴室", "玩具反斗城", "贤爸科学", "奈尔宝家庭中心", "菊泉卫生服务中心"],
             "education": ["otto2",  "教育", "当当网", "少儿英语", "彩贝壳"],
             "holiday": ["去哪儿网", "酒店"],
             "business": ["丽途国际公寓"],
@@ -63,7 +66,16 @@ class Record():
 #            self.amount = float(rslt.groups()[2].replace(',',''))   #处理3,710
 #            self.detail = rslt.groups()[1]
             
-            self.date = rslt.groupdict()['date']
+            date = rslt.groupdict()['date']
+            if len(date) in (4, 5):  # 招行民生日期格式
+                self.date = str(datetime.datetime.today().year) + '-' + date[:2] + '-' + date[-2:]
+                if date.startswith('12'):
+                    print("12月账单, 注意年份!!!")
+            elif '-' in date:
+                self.date = date
+            else:
+                assert 0, 'error date format{}'.format(date)
+                    
             self.amount = float(rslt.groupdict()['amount'].replace(',','')) #处理千分号
             self.detail = rslt.groupdict()['detail']
             
@@ -111,7 +123,7 @@ def org(bill_text, print_reverse=False):
     sorted_bill = [[cat, []] for cat in category]
     sorted_bill.append(['unsorted', []])
     
-    for pattern in (cmb_pattern, cmb_pattern_pdf, cmbc_pattern):
+    for pattern in (cmb_pattern, cmb_pattern_pdf, cmbc_pattern, cbc_pattern):
         rslt = re.match(pattern, entry_text[0])
         if rslt:
             break
@@ -148,16 +160,19 @@ def org(bill_text, print_reverse=False):
 
 
 def generate_xls(sorted_bill, filename = 'cmb_xxxx.xls'):
-    assert filename.startswith('cmb') or filename.startswith('cmbc'), 'xls必须以cmb或cmbc开头'
+    assert filename.startswith('cmb') or filename.startswith('cmbc') or filename.startswith('cbc') #xls必须以cmb或cmbc,ccb开头
 
     xls = SuiXlsTemplate('./xls/' + filename)
     
     if filename.startswith('cmbc'):
         member = ''
-        account = '信用卡民生人民币'
+        account = '信用卡民生'
     elif filename.startswith('cmb_'):
         member = '郑之颖'
         account = '信用卡招行人民币'
+    elif filename.startswith('cbc_'):
+        member = ''
+        account = '信用卡建行沪通'
 
     for category_entrys in sorted_bill:
         category_name = category_entrys[0]
@@ -165,7 +180,7 @@ def generate_xls(sorted_bill, filename = 'cmb_xxxx.xls'):
         cat2 = sui_cat_table[category_name][1]
             
         for entry in category_entrys[1]:
-            date = str(datetime.datetime.today().year) + '-' + entry.date[:2] + '-' +entry.date[-2:]
+            date = entry.date
             detail = entry.detail
             
             # 微调

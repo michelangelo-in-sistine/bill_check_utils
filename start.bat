@@ -1,0 +1,1 @@
+python main.py ./txt/cmb_1910.txt cmb_1910.xls
