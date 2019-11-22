@@ -23,10 +23,12 @@ sort_rules = {"food": ["肯德基", "老盛昌", "全家", "水果", "汉堡王"
                       "耶里夏丽", "维果部落", "巴黎贝甜", "宽窄巷", "甘兔庵", "泉盛公司", "茶食代", "早安巴黎", "面包", "谷田稻香", "烧肉",
                       "餐厅", "酒楼", "食堂", "果茶", "巴黎贝甜", "维果部落", "茶餐", "冰激凌", "陆祥店", "Coffee+Belt",
                       "麦卡尤娜", "马上诺", "好德便利", "吴宝春麦方店", "7-Eleven", "阿甘锅盔", "蘇小柳", "曼游记", "杂粮煎饼", "留夫鸭", "清美绿色食品" ,
-                      "小面家人", "食云纪", "Cantina", "牛杂", "牛肉", ],
+                      "小面家人", "食云纪", "Cantina", "牛杂", "牛肉", "张亮麻辣烫", "Wagas", "串小贱", "小杨生煎", "鲍师傅糕点", "羊肉串", "吴老幺", 
+                      "学而思轻课", "汤连得", "韵秋荷", "加减橙厨", "熬八年", "佬街佬味"],
 
             "life": ["绿地优鲜超市", "华住", "宝岛眼镜", "上蔬永辉", "迪亚天天", "窝的鲜花", "茶阁里的猫",
-                     "联华超市", "叮咚买菜", "万宁", "屈臣氏", "名创优品",  "顺丰速运"],
+                     "联华超市", "叮咚买菜", "万宁", "屈臣氏", "名创优品",  "顺丰速运", "刘氏蔬菜", "德邦物流", "宜家家居", 
+                     "美甲护肤", ],
             "dressing": ["优衣库", "HM", "盖璞", "热风", "GU", "服装"],
             "traffic": ["嘀嗒", "美团 && amount < 20", "上海交通卡", "石油化工", "滴滴出行", "钧正网络", "地铁APP"],
             "shopping": ["京东", "久光", "芮欧", "JD", "开市客",],
@@ -128,7 +130,7 @@ def org(bill_text, print_reverse=False):
         if rslt:
             break
     else:
-        assert 0, 'no repr pattern match!'
+        assert 0, 'no repr pattern match! "{}"'.format(entry_text[0])
     
     # 
     for each_entry in entry_text:
@@ -160,7 +162,7 @@ def org(bill_text, print_reverse=False):
 
 
 def generate_xls(sorted_bill, filename = 'cmb_xxxx.xls'):
-    assert filename.startswith('cmb') or filename.startswith('cmbc') or filename.startswith('cbc') #xls必须以cmb或cmbc,ccb开头
+    assert filename.startswith('cmb') or filename.startswith('cmbc') or filename.startswith('cbc'), "xls file name:{}".format(filename) #xls必须以cmb或cmbc,ccb开头
 
     xls = SuiXlsTemplate('./xls/' + filename)
     
@@ -202,6 +204,7 @@ def generate_xls(sorted_bill, filename = 'cmb_xxxx.xls'):
             xls.add_expense_entry(xls_enpense_entry)
             
     xls.save()
+    print('generate xls file at ', xls.file_path)
 
 
 if "__main__" == __name__:

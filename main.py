@@ -6,6 +6,7 @@ Created on Sun Mar 17 03:14:12 2019
 """
 import bill_checker as bc
 import sys
+import os.path
 
 if "__main__" == __name__:
     if len(sys.argv) == 1:
@@ -23,7 +24,11 @@ if "__main__" == __name__:
         with open(sys.argv[1]) as f:
             bill_txt = f.read()
             bills = bc.org(bill_txt)
-            bc.generate_xls(bills, sys.argv[2])
+            if len(sys.argv) == 2:
+                xls_file = os.path.split(sys.argv[1])[-1].split('.')[-2] + '.xls'
+            else:
+                xls_file = sys.argv[2]
+            bc.generate_xls(bills, xls_file)
         
     
     
