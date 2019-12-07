@@ -9,7 +9,7 @@ from xls_writer import SuiXlsTemplate, ExpenseEntry
 import datetime
 
 # cmb email 账单
-cmb_pattern = r"(?P<date>\d+) \d+ (?P<detail>.+) [￥$] (?P<amount>[\d,]+\.\d+) 7007 (.+) ([\d,]+\.\d+)"
+cmb_pattern = r"(?P<date>\d+) \d+ (?P<detail>.+) [￥$](?P<amount>-* *[\d,]+\.\d+) 7007 (.+) (-* *[\d,]+\.\d+)"
 # cmb pdf 账单
 cmb_pattern_pdf = r"(?P<date>\d\d/\d\d) (?P<detail>.+) (?P<amount>[\d,]+\.\d+) 7007 \d\d/\d\d ([\d,]+\.\d+)\(CN\)"
 # cmbc 账单
@@ -78,7 +78,11 @@ class Record():
             else:
                 assert 0, 'error date format{}'.format(date)
                     
-            self.amount = float(rslt.groupdict()['amount'].replace(',','')) #处理千分号
+            amount = rslt.groupdict()['amount']
+            amount = amount.replace(',','') #处理千分号
+            amount = amount.replace(' ','') #空格
+            
+            self.amount = float(amount)
             self.detail = rslt.groupdict()['detail']
             
         else:
@@ -93,6 +97,9 @@ class Record():
         """
         if category is None:
             category = list(sort_rules.keys())
+            
+        if self.amount < 0:
+            return -1, 'unsorted'
         
         for i, cat in enumerate(category):
             try:
