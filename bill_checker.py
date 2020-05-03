@@ -25,20 +25,22 @@ sort_rules = {"food": ["肯德基", "老盛昌", "全家", "水果", "汉堡王"
                       "麦卡尤娜", "马上诺", "好德便利", "吴宝春麦方店", "7-Eleven", "阿甘锅盔", "蘇小柳", "曼游记", "杂粮煎饼", "留夫鸭", "清美绿色食品" ,
                       "小面家人", "食云纪", "Cantina", "牛杂", "牛肉", "张亮麻辣烫", "Wagas", "串小贱", "小杨生煎", "鲍师傅糕点", "羊肉串", "吴老幺", 
                       "学而思轻课", "汤连得", "韵秋荷", "加减橙厨", "熬八年", "佬街佬味", "西餐", "85度C", "LAWSON", "TimsCoffeeHouse", "北鼎BUYDEEM", "料理", "烤鱼",
-                      "追湘", ],
+                      "追湘", "叮咚买菜", "快乐烘焙", "点都德", "葡式蛋挞", "麦金地", "歌志轩", "厨嫂当家", "家有好面", "棒棒鸡", "潮汕传人"],
 
             "life": ["绿地优鲜超市", "华住", "宝岛眼镜", "上蔬永辉", "迪亚天天", "窝的鲜花", "茶阁里的猫",
-                     "联华超市", "叮咚买菜", "万宁", "屈臣氏", "名创优品",  "顺丰速运", "刘氏蔬菜", "德邦物流", "宜家家居", 
-                     "美甲护肤", "丝芙兰", "洗衣"],
+                     "联华超市", "万宁", "屈臣氏", "名创优品",  "顺丰速运", "刘氏蔬菜", "德邦物流", "宜家家居", 
+                     "美甲护肤", "丝芙兰", "洗衣", "喜茶", "大茉莉好物集", "永辉生活"],
+            "coffee": ["花神咖啡馆"],
             "dressing": ["优衣库", "HM", "盖璞", "热风", "GU", "服装", "飒拉", "新天泽雅柔"],
-            "traffic": ["嘀嗒", "美团 && amount < 20", "上海交通卡", "石油化工", "滴滴出行", "钧正网络", "地铁APP"],
+            "traffic": ["嘀嗒", "美团 && amount < 20", "上海交通卡", "滴滴出行", "钧正网络", "地铁APP", "杭州青奇", "曹操出行"],
+            "car": ["石油化工", "十院停车场", ],
             "shopping": ["京东", "久光", "芮欧", "JD", "开市客",],
-            "basic": ["城投水务", "电力公司", "手机充值", "上海燃气有限公司", "保利叶语物业"],
+            "basic": ["城投水务", "电力公司", "手机充值", "上海燃气有限公司", "保利叶语物业", "中国电信股份有限公司"],
             "entertain": ["幸福蓝海", "格瓦拉", "主题乐园", "顾村公园管理", ],
             "health": ["复旦大学附属华山医院", "药房", "儿童医院", "第十人民医院", "望族国宾"],
             "raise child": ["网易考拉", "卡通尼", "麦淘亲子", "亲子",
-                            "爱婴室", "玩具反斗城", "贤爸科学", "奈尔宝家庭中心", "菊泉卫生服务中心"],
-            "education": ["otto2",  "教育", "当当网", "少儿英语", "彩贝壳", "孩思乐"],
+                            "爱婴室", "玩具反斗城", "贤爸科学", "奈尔宝家庭中心", "菊泉卫生服务中心", "lollipop"],
+            "education": ["otto2",  "教育", "当当网", "少儿英语", "彩贝壳", "孩思乐", "小鹅通知识助手", "STEM"],
             "holiday": ["去哪儿网", "酒店"],
             "business": ["丽途国际公寓"],
             "security": ["相互宝"]
@@ -46,8 +48,10 @@ sort_rules = {"food": ["肯德基", "老盛昌", "全家", "水果", "汉堡王"
 
 sui_cat_table = {"food": ["食品酒水", "早午晚餐"],
                  "life": ["日常生活", "日常花销"],
+                 "coffee": ["食品酒水", "烟酒茶"],
                  "dressing": ["衣服饰品", "衣服裤子"],
                  "traffic": ["行车交通", "打车租车"],
+                 "car": ["行车交通", "私家车费用"],
                  "shopping": ["购置物品", "生活用品"],
                  "basic": ["固定支出", "水电煤气"],
                  "entertain": ["休闲娱乐", "休闲玩乐"],
@@ -71,9 +75,12 @@ class Record():
             
             date = rslt.groupdict()['date']
             if len(date) in (4, 5):  # 招行民生日期格式
-                self.date = str(datetime.datetime.today().year) + '-' + date[:2] + '-' + date[-2:]
                 if date.startswith('12'):
                     print("12月账单, 注意年份!!!")
+                    self.date = str(datetime.datetime.today().year - 1) + '-' + date[:2] + '-' + date[-2:]
+                else:
+                    self.date = str(datetime.datetime.today().year) + '-' + date[:2] + '-' + date[-2:]
+
             elif '-' in date:
                 self.date = date
             else:
@@ -85,10 +92,13 @@ class Record():
             
             self.amount = float(amount)
             self.detail = rslt.groupdict()['detail']
+            self.valid = True
             
         else:
-            print(entry_text)
-            assert 0, "entry error: {}".format(entry_text)
+            print("Entry:", entry_text, " can't get sorted!")
+            self.valid = False
+            
+            #assert 0, "entry error: {}".format(entry_text)
         
     def __str__(self):
         return "{:<8.2f} {:<8s} {:<s}".format(self.amount, self.date, self.detail)
@@ -143,8 +153,9 @@ def org(bill_text, print_reverse=False):
     # 
     for each_entry in entry_text:
         a = Record(each_entry, pattern)
-        rslt = a.sort(category)
-        sorted_bill[rslt[0]][1].append(a)
+        if a.valid:
+            rslt = a.sort(category)
+            sorted_bill[rslt[0]][1].append(a)
         
     # 按details排序
     for cat_entrys in sorted_bill:
