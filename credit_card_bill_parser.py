@@ -41,6 +41,7 @@ class Record:
             self.amount = float(amount)
             self.detail = rslt.groupdict()['detail']
             self.valid = True
+            self.comment = None
 
             self.classification = None
             self.category_index = None
@@ -61,12 +62,25 @@ class Record:
             classification = 0
         else:
             classification = 1
+            self.amount = -self.amount  # 退货数额需转成正数
         category_keywords_dict = category_keywords[classification]
         category_keys = list(category_keywords_dict.keys())
 
         for i, key in enumerate(category_keys):
             try:
                 for keyword in category_keywords_dict[key]:
+                    if '#' in keyword:
+                        # 如果包含'#', 后半部分为注释
+                        pos_comment_start = keyword.find('#')
+                        pos_comment_end = keyword.rfind('#')
+                        if pos_comment_end > pos_comment_start:
+                            comment = keyword[pos_comment_start + 1: pos_comment_end]
+                        else:
+                            comment = keyword[pos_comment_start + 1:]
+                        keyword = keyword[:pos_comment_start]
+                    else:
+                        comment = None
+
                     if '&&' in keyword:
                         # 如果是一条复合条件, 第一项为关键字, 后几项为条件
                         seg = keyword.split('&&')
@@ -80,17 +94,18 @@ class Record:
                                 self.classification = classification
                                 self.category_index = i
                                 self.category_key = key
+                                self.comment = comment
                                 return classification, i, key
                     else:
                         if keyword in self.detail:
                             self.classification = classification
                             self.category_index = i
                             self.category_key = key
+                            self.comment = comment
                             return classification, i, key
             except Exception as e:
                 print("err!", self)
                 raise e
-
         else:
             self.classification = classification
             self.category_index = -1
@@ -154,7 +169,10 @@ class BillParser:
             classification = record.classification                  # expense or income
             date = record.date
             amount = record.amount
-            detail = record.detail
+            if record.comment is not None:
+                detail = record.detail + '({:s})'.format(record.comment) 
+            else:
+                detail = record.detail
             category_key = record.category_key
 
             if classification == 0:
