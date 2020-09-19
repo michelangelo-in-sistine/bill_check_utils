@@ -117,11 +117,13 @@ class BillParser:
     def __init__(self, ):
         # 账单文本格式的正则表达式pattern
         self.bill_record_str_patterns = [pattern_cmb, pattern_cmb_pdf, pattern_cmbc, pattern_ccb]
+        self.bill_cards = ['信用卡招行人民币', '信用卡招行人民币', '信用卡民生', '信用卡建行沪通']
         self.bill_category_keywords = bill_category_keywords
         self.account_category_expense = sui_category_expense
         self.account_category_income = sui_category_income
 
         self.records = None
+        self.card_name = None
         pass
 
     def read_credit_card_bill_file(self, bill_file):
@@ -130,9 +132,10 @@ class BillParser:
         entry_text = [entry.strip() for entry in bill_text.split('\n') if len(entry) > 8]
 
         # 用第一条记录文本确定bill text是哪个银行
-        for pattern in self.bill_record_str_patterns:
+        for i, pattern in enumerate(self.bill_record_str_patterns):
             rslt = re.match(pattern, entry_text[0])
             if rslt:
+                self.card_name = self.bill_cards[i]
                 break
         else:
             assert 0, 'no repr pattern match! "{}"'.format(entry_text[0])
@@ -155,15 +158,11 @@ class BillParser:
         assert filename.startswith('cmb') or filename.startswith('cmbc') or filename.startswith('cbc'), "xls file name:{}".format(filename)  # xls必须以cmb或cmbc,ccb开头
 
         xls = SuiXlsTemplate('./xls/' + filename)
-        if filename.startswith('cmbc'):
-            member = ''
-            account = '信用卡民生'
-        elif filename.startswith('cmb_'):
+        account = self.card_name
+        if self.card_name == '信用卡招行人民币':
             member = '郑之颖'
-            account = '信用卡招行人民币'
-        elif filename.startswith('cbc_'):
+        else:
             member = ''
-            account = '信用卡建行沪通'
 
         for record in self.records:
             classification = record.classification                  # expense or income
