@@ -15,7 +15,7 @@ from bill_category_variables import *
 class Record:
     """ 一条消费(退款)记录
     """
-    def __init__(self, entry_text, pattern):
+    def __init__(self, entry_text, pattern, bill_year, bill_month):
         rslt = re.match(pattern, entry_text)
         if rslt:
             #            self.date = rslt.groups()[0]
@@ -26,9 +26,14 @@ class Record:
             if len(date) in (4, 5):  # 招行民生日期格式
                 if date.startswith('12'):
                     print("12月账单, 注意年份!!!")
-                    self.date = str(datetime.datetime.today().year - 1) + '-' + date[:2] + '-' + date[-2:]
+                    assert bill_month == 12 or bill_month == 1
+                    if bill_month == 12:
+                        self.date = str(bill_year) + '-' + date[:2] + '-' + date[-2:]
+                    else:
+                        print("去年12月记录")
+                        self.date = str(bill_year - 1) + '-' + date[:2] + '-' + date[-2:]
                 else:
-                    self.date = str(datetime.datetime.today().year) + '-' + date[:2] + '-' + date[-2:]
+                    self.date = str(bill_year) + '-' + date[:2] + '-' + date[-2:]
             elif '-' in date:
                 self.date = date
             else:
@@ -117,20 +122,56 @@ class BillParser:
     def __init__(self, ):
         # 账单文本格式的正则表达式pattern
         self.bill_record_str_patterns = [pattern_cmb, pattern_cmb_pdf, pattern_cmbc, pattern_ccb]
-        self.bill_cards = ['信用卡招行人民币', '信用卡招行人民币', '信用卡民生', '信用卡建行沪通']
+        self.bill_cards = ['信用卡招行人民币', '信用卡招行人民币', '信用卡民生', '信用卡建行沪通'] # 两种格式都是招行的
         self.bill_category_keywords = bill_category_keywords
         self.account_category_expense = sui_category_expense
         self.account_category_income = sui_category_income
 
         self.records = None
         self.card_name = None
+        self.bill_year = None
+        self.bill_month = None
         pass
+    
+    def judge_bill_date(self, all_entry, pattern):
+        month_set = []
+        
+        for entry_text in all_entry:
+            rslt = re.match(pattern, entry_text)
+            if rslt:
+                date = rslt.groupdict()['date']
+                if len(date) in (4, 5):  # 招行民生日期格式
+                    month = int(date[:2])
+                elif '-' in date:
+                    month = int(date[5:7])
+                else:
+                    assert 0, 'error date format{}'.format(date)
+    
+                if int(month) not in month_set:
+                    month_set.append(month)
+        
+        assert len(month_set) <= 2, "error month data in bill:{}".format(month_set) 
+        month_set.sort()
+        if(len(month_set) == 2 and month_set[0] == 1 and month_set[-1] == 12):
+            # 跨年账单
+            print("跨年账单")
+            self.bill_year = datetime.datetime.today().year
+            self.bill_month = 1
+        else:
+            if month_set[-1] > datetime.datetime.today().month:
+                # 如账单月份比当前时间大, 说明是去年账单, 除此之外, 都是今年账单
+                self.bill_year = datetime.datetime.today().year - 1
+            else:
+                self.bill_year = datetime.datetime.today().year
+            self.bill_month = month_set[-1]
+        
+        return self.bill_year, self.bill_month        
 
     def read_credit_card_bill_file(self, bill_file):
         with open(bill_file) as f:
             bill_text = f.read()
         entry_text = [entry.strip() for entry in bill_text.split('\n') if len(entry) > 8]
-
+        
         # 用第一条记录文本确定bill text是哪个银行
         for i, pattern in enumerate(self.bill_record_str_patterns):
             rslt = re.match(pattern, entry_text[0])
@@ -140,8 +181,12 @@ class BillParser:
         else:
             assert 0, 'no repr pattern match! "{}"'.format(entry_text[0])
 
+        # 招行信用卡民生信用卡先浏览全部记录确定账单日期, 避免跨年账单前后年份错乱
+        if self.card_name in ('信用卡招行人民币', '信用卡民生'):
+            self.judge_bill_date(entry_text, pattern)
+
         # 得到消费记录
-        self.records = [Record(each_entry, pattern) for each_entry in entry_text]
+        self.records = [Record(each_entry, pattern, self.bill_year, self.bill_month) for each_entry in entry_text]
 
         # 计算消费记录分类
         for rec in self.records:
@@ -200,11 +245,11 @@ class BillParser:
 
         xls.save()
         print('generate xls file at ', xls.file_path)
-
-
+        
 if "__main__" == __name__:
     bill = BillParser()
-    bill.read_credit_card_bill_file(r'e:\work\work_py\project\bill_check_utils\txt\cmb_2004.txt')
-    bill.sort_bill()
-    bill.print_bill()
-    bill.write_xls('cmb_2004.xls')
+#    bill.read_credit_card_bill_file(r'e:\work\work_py\project\bill_check_utils\txt\cmb_202012.txt')
+#    bill.sort_bill()
+#    bill.print_bill()
+#    bill.write_xls('cmb_2004.xls')
+#    bill.test_bill_date(r'e:\work\work_py\project\bill_check_utils\txt\cmbc_1912.txt')
