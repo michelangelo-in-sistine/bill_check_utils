@@ -155,7 +155,7 @@ class BillParser:
         self.records.sort(key=lambda x: x.category_key)
 
     def write_xls(self, filename='cmb_xxxx.xls'):
-        assert filename.startswith('cmb') or filename.startswith('cmbc') or filename.startswith('cbc'), "xls file name:{}".format(filename)  # xls必须以cmb或cmbc,ccb开头
+        assert filename.startswith('cmb') or filename.startswith('cmbc') or filename.startswith('ccb'), "xls file name:{}".format(filename)  # xls必须以cmb或cmbc,ccb开头
 
         xls = SuiXlsTemplate('./xls/' + filename)
         account = self.card_name
