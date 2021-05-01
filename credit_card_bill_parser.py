@@ -168,8 +168,13 @@ class BillParser:
         return self.bill_year, self.bill_month        
 
     def read_credit_card_bill_file(self, bill_file):
-        with open(bill_file) as f:
-            bill_text = f.read()
+        try:
+            with open(bill_file) as f:
+                bill_text = f.read()
+        except UnicodeDecodeError:
+            with open(bill_file, encoding='utf-8') as f:
+                bill_text = f.read()
+                print('utf8 txt detected')
         entry_text = [entry.strip() for entry in bill_text.split('\n') if len(entry) > 8]
         
         # 用第一条记录文本确定bill text是哪个银行
@@ -199,10 +204,10 @@ class BillParser:
     def sort_bill(self,):
         self.records.sort(key=lambda x: x.category_key)
 
-    def write_xls(self, filename='cmb_xxxx.xls'):
-        assert filename.startswith('cmb') or filename.startswith('cmbc') or filename.startswith('ccb'), "xls file name:{}".format(filename)  # xls必须以cmb或cmbc,ccb开头
+    def write_xls(self, xls_file_path='cmb_xxxx.xls'):
+        #assert filename.startswith('cmb') or filename.startswith('cmbc') or filename.startswith('ccb'), "xls file name:{}".format(filename)  # xls必须以cmb或cmbc,ccb开头
 
-        xls = SuiXlsTemplate('./xls/' + filename)
+        xls = SuiXlsTemplate(xls_file_path)
         account = self.card_name
         if self.card_name == '信用卡招行人民币':
             member = '郑之颖'
