@@ -3,7 +3,7 @@
     2020-05-03
 """
 # cmb(招行) email 账单
-pattern_cmb = r"(?P<date>\d+) \d+ (?P<detail>.+) [￥$](?P<amount>-* *[\d,]+\.\d+) 7007 (.+) (-* *[\d,]+\.\d+)"
+pattern_cmb = r"\d+ (?P<date>\d+) (?P<detail>.+) [￥$](?P<amount>-* *[\d,]+\.\d+) 7007 (.+) (-* *[\d,]+\.\d+)"
 # cmb(招行) pdf 账单
 pattern_cmb_pdf = r"(?P<date>\d\d/\d\d) (?P<detail>.+) (?P<amount>[\d,]+\.\d+) 7007 \d\d/\d\d ([\d,]+\.\d+)\(CN\)"
 # cmbc(民生) 账单
