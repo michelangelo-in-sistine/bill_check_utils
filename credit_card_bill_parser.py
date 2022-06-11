@@ -121,8 +121,8 @@ class Record:
 class BillParser:
     def __init__(self, ):
         # 账单文本格式的正则表达式pattern
-        self.bill_record_str_patterns = [pattern_cmb, pattern_cmb_pdf, pattern_cmbc, pattern_ccb]
-        self.bill_cards = ['信用卡招行人民币', '信用卡招行人民币', '信用卡民生', '信用卡建行沪通'] # 两种格式都是招行的
+        self.bill_record_str_patterns = [pattern_cmb, pattern_cmb_pdf1, pattern_cmb_pdf2, pattern_cmbc, pattern_ccb]
+        self.bill_cards = ['信用卡招行人民币', '信用卡招行人民币', '信用卡招行人民币', '信用卡民生', '信用卡建行沪通'] # 两种格式都是招行的
         self.bill_category_keywords = bill_category_keywords
         self.account_category_expense = sui_category_expense
         self.account_category_income = sui_category_income
