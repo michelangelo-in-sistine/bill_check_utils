@@ -238,8 +238,10 @@ class BillParser:
             if '美团' in detail:
                 if category_key == 'food':
                     detail = '美团外卖'
-                else:
+                elif category_key == 'taxi':
                     detail = '美团打车'
+                else:
+                    detail = '美团共享单车'
 
             if cat1 == '固定支出' and '手机充值' in detail:
                 cat2 = '通话上网'
