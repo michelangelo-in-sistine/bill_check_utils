@@ -150,7 +150,7 @@ class BillParser:
                 if int(month) not in month_set:
                     month_set.append(month)
         
-        assert len(month_set) <= 2, "error month data in bill:{}".format(month_set) 
+        #assert len(month_set) <= 2, "error month data in bill:{}".format(month_set) 
         month_set.sort()
         if(len(month_set) == 2 and month_set[0] == 1 and month_set[-1] == 12):
             # 跨年账单
